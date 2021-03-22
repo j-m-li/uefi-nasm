@@ -1,5 +1,5 @@
-#                      22 march MMXXI PUBLIC DOMAIN
-#           The author disclaims copyright to this source code.
+;                      22 march MMXXI PUBLIC DOMAIN
+;           The author disclaims copyright to this source code.
  
 bits 64
 org  0x200000
