@@ -12,8 +12,8 @@ dos:
     	times 16 dd 0
 
 pecoff:
-        dd `PE\0\0`     ; sig
-    	dw 0x8664       ;  IMAGE_FILE_MACHINE_AMD64
+        dd `PE\0\0`     ; Signature
+    	dw 0x8664       ; Machine IMAGE_FILE_MACHINE_AMD64
     	dw 3            ; NumberOfSections
     	dd 0x5cba52f6   ; TimeDateStamp
 	dd 0		; PointerToSymbolTable
@@ -22,32 +22,46 @@ pecoff:
     	dw 0x202e       ; Characteristics
 
 oheader:
-    	dd 0x0000020b   ; oheader + 0000 linker sig
-    	dd codesize     ; code size
-    	dd datasize     ; data size
-    	dd 0            ; uninitialized data size
-    	dd 4096         ; * entry
-    	dd 4096         ; * code base
-    	dq 0x200000     ; * image base
-    	dd 4096         ; section alignment
-    	dd 4096         ; file alignment
-    	dq 0            ; os maj, min, image maj, min
-    	dq 0            ; subsys maj, min, reserved
-    	dd 0x4000       ; image size
-    	dd 4096         ; headers size
-    	dd 0            ; checksum
-    	dd 0x0040000A   ; dll characteristics & subsystem
-    	dq 0x10000      ; stack reserve size
-    	dq 0x10000      ; stack commit size
-    	dq 0x10000      ; heap reserve size
-    	dq 0            ; heap reserve commit
-    	dd 0            ; loader flags
-    	dd 0x10         ; rva count
+    	dw 0x020b   	; PE32+
+	db 0		; MajorLinkerVersion
+	db 0		; MinorLinkerVersion
+    	dd codesize     ; SizeOfCode  
+  	dd datasize     ; SizeOfInitilizedData
+    	dd 0            ; SizeOfUninitializedDta
+    	dd 4096         ; AddressOfEntryPoint
+    	dd 4096         ; BaseOfCode
+
+    	dq 0x200000     ; ImageBase
+    	dd 4096         ; SectionAlignment
+    	dd 4096         ; FileAlignment
+	dw 0		; MajorOperatingSystemVersion
+	dw 0		; MinorOperatingSystemVersion
+	dw 0		; MajorImageVersion
+	dw 0		; MinorImageVersion	
+	dw 0		; MajorSubsystemVersion
+	dw 0		; MinorSubsystemVersion
+	dd 0		; Win32VersionValue
+
+    	dd 4096 + datasize + codesize      ; SizeOfImage
+    	dd 4096         ; SizeOfHeaders
+    	dd 0            ; Checksum
+	dw 0x000A	; Subsystem
+	dw 0x0040	; DllCharateristics
+
+    	dq 0x10000      ; SizeOfStackReserve
+    	dq 0x10000      ; SizeOfStackCommit
+    	dq 0x10000      ; SizeOfHeapReserve
+    	dq 0            ; SizeOfHeapCommit
+    	dd 0            ; LOaderFlags
+    	dd 0x10         ; NumberOfRvaAndSizes
 
 dirs:
     	times 5 dq 0    ; unused
-    	dd 0x004000     ; virtual address .reloc
-    	dd 0      	; size .reloc
+
+			; BaseRelocationTable
+    	dd 0x004000     ; VirtualAddress
+    	dd 0      	; Size
+
         times 10 dq 0   ; unused
 oend:
 osize equ oend - oheader
@@ -55,15 +69,16 @@ osize equ oend - oheader
 sects:
 .1:
     	dq  `.text`     ; Name
-    	dd  codesize    ; virtual size
-    	dd  4096        ; virtual address   
+    	dd  codesize    ; VirtualSize
+    	dd  4096        ; VirtualAddress   
     	dd  codesize    ; SizeOfRawData
     	dd  4096        ; PointerToRawData
-    	dd  0           ; * relocations, 
-	dd  0		; * line numbers
-    	dw  0           ; # relocations, 
-	dw  0		; # line numbers
-    	dd  0x60000020      ; characteristics
+    	dd  0           ; PointerToRelocations 
+	dd  0		; PointerToLineNumbers
+    	dw  0           ; NumberOfRelocations
+	dw  0		; NumberOfLineNumbers
+    	dd  0x60000020  ; Characteristics IMAGE_SCN_CNT_CODE
+			; IMAGE_SCN_MEM_EXECUTE IMAGE_SCN_MEM_READ
 
 .2:
         dq  `.data`
@@ -75,7 +90,8 @@ sects:
         dd  0
         dw  0
         dw  0
-        dd  0xC0000040     
+        dd  0xC0000040    ; IMAGE_SCN_MEM_READ IMAGE_SCN_MEM_WRITE  
+			  ; IMAGE_SCN_CNT_INITIALIZED_DATA
 
 
 .3:
@@ -88,7 +104,7 @@ sects:
     	dd  0
     	dw  0
     	dw  0
-    	dd  0x02000040
+    	dd  0x02000040 	; IMAGE_SCN_CNT_INITIALIZED_DATA IMAGE_SCN_MEM_DISCARDABLE
 
 	times 4096 - ($-$$) db 0 ;align the text section on a 4096 byte boundary
 
@@ -103,7 +119,7 @@ section .text follows=.header
 	add rsp, 48
 	ret
 
-    	times 8192-($-$$) db 0 
+    	times ($-$$) % 8192 db 0 
 
 codesize equ $ - $$
 
@@ -116,7 +132,7 @@ _EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID db 0xde, 0xa9, 0x42, 0x90
 
 hello  	db __utf16__ "Hello World.", 0
 
-    	times 4096-($-$$) db 0
+    	times ($-$$) % 4096 db 0
 
 datasize equ $ - $$
 
