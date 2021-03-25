@@ -1,5 +1,9 @@
 ;                      22 march MMXXI PUBLIC DOMAIN
 ;           The author disclaims copyright to this source code.
+
+; https://docs.microsoft.com/en-us/windows/win32/debug/pe-format?redirectedfrom=MSDN#section-flags
+; https://github.com/charlesap/nasm-uefi/blob/master/yo.asm
+
  
 bits 64
 org  0x200000
